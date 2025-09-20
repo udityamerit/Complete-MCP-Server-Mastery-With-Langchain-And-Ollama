@@ -1,0 +1,945 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Model Context Protocol (MCP) Architecture</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-blue: #2563eb;
+            --primary-purple: #7c3aed;
+            --primary-orange: #ea580c;
+            --primary-green: #16a34a;
+            --secondary-gray: #64748b;
+            --light-gray: #f8fafc;
+            --border-color: #e2e8f0;
+            --shadow-light: 0 1px 3px rgba(0, 0, 0, 0.1);
+            --shadow-medium: 0 4px 12px rgba(0, 0, 0, 0.15);
+            --shadow-heavy: 0 8px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            color: #1e293b;
+            min-height: 100vh;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* Header */
+        .header {
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow-light);
+            border: 1px solid var(--border-color);
+        }
+
+        .header-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .header-title {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .header-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, var(--primary-blue), var(--primary-purple));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5rem;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #0f172a;
+            margin: 0;
+        }
+
+        .header p {
+            color: var(--secondary-gray);
+            margin-top: 0.5rem;
+            font-size: 1rem;
+        }
+
+        .version-badge {
+            background: linear-gradient(135deg, var(--primary-green), #059669);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+
+        /* Main Architecture */
+        .architecture-container {
+            background: white;
+            border-radius: 16px;
+            padding: 2.5rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow-light);
+            border: 1px solid var(--border-color);
+        }
+
+        .architecture-grid {
+            display: grid;
+            grid-template-columns: 280px 1fr 280px;
+            gap: 3rem;
+            align-items: start;
+            position: relative;
+            min-height: 500px;
+        }
+
+        /* Host Section */
+        .host-section {
+            background: linear-gradient(135deg, #fef3c7 0%, #fed7aa 100%);
+            border: 2px solid #f59e0b;
+            border-radius: 16px;
+            padding: 1.5rem;
+            height: fit-content;
+        }
+
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 1.5rem;
+            color: #92400e;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .host-application {
+            background: white;
+            border: 1px solid #fbbf24;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .host-application::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(251, 191, 36, 0.1), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .host-application:hover::before {
+            left: 100%;
+        }
+
+        .host-application:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-medium);
+            border-color: #f59e0b;
+        }
+
+        .app-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .app-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            color: white;
+        }
+
+        .claude-app .app-icon {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+        }
+
+        .ide-app .app-icon {
+            background: linear-gradient(135deg, #10b981, #059669);
+        }
+
+        .ai-tools-app .app-icon {
+            background: linear-gradient(135deg, var(--primary-blue), #1d4ed8);
+        }
+
+        .app-name {
+            font-weight: 600;
+            color: #1f2937;
+        }
+
+        .app-description {
+            color: var(--secondary-gray);
+            font-size: 0.875rem;
+        }
+
+        /* Middle Section */
+        .middle-section {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+            justify-content: center;
+        }
+
+        .connection-row {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            position: relative;
+        }
+
+        .mcp-client {
+            background: linear-gradient(135deg, #e0e7ff, #c7d2fe);
+            border: 2px solid var(--primary-purple);
+            border-radius: 12px;
+            padding: 1rem 1.5rem;
+            color: #5b21b6;
+            font-weight: 600;
+            text-align: center;
+            min-width: 120px;
+            position: relative;
+            animation: client-pulse 4s ease-in-out infinite;
+        }
+
+        .connection-line {
+            flex: 1;
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary-purple), var(--primary-orange));
+            border-radius: 2px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .connection-line::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 30%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.8), transparent);
+            animation: data-flow 3s linear infinite;
+        }
+
+        .mcp-server {
+            background: linear-gradient(135deg, #fff7ed, #fed7aa);
+            border: 2px solid var(--primary-orange);
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+            min-width: 140px;
+            position: relative;
+            box-shadow: var(--shadow-medium);
+        }
+
+        .server-title {
+            font-weight: 700;
+            color: #9a3412;
+            margin-bottom: 0.75rem;
+        }
+
+        .server-stack {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .server-layer {
+            height: 8px;
+            background: linear-gradient(90deg, var(--primary-orange), #dc2626);
+            border-radius: 4px;
+            position: relative;
+            animation: server-activity 2s ease-in-out infinite;
+        }
+
+        .server-layer:nth-child(1) { animation-delay: 0s; }
+        .server-layer:nth-child(2) { animation-delay: 0.3s; }
+        .server-layer:nth-child(3) { animation-delay: 0.6s; }
+
+        .protocol-label {
+            position: absolute;
+            top: -1.5rem;
+            left: 50%;
+            transform: translateX(-50%);
+            background: white;
+            color: var(--primary-purple);
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            border: 1px solid var(--primary-purple);
+        }
+
+        /* Resources Section */
+        .resources-section {
+            background: linear-gradient(135deg, #eff6ff, #dbeafe);
+            border: 2px solid var(--primary-blue);
+            border-radius: 16px;
+            padding: 1.5rem;
+            height: fit-content;
+        }
+
+        .resource-item {
+            background: white;
+            border: 1px solid #60a5fa;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+        }
+
+        .resource-item:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-medium);
+            border-color: var(--primary-blue);
+        }
+
+        .resource-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .resource-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.125rem;
+            color: white;
+        }
+
+        .filesystem-resource .resource-icon {
+            background: linear-gradient(135deg, #fbbf24, #f59e0b);
+        }
+
+        .database-resource .resource-icon {
+            background: linear-gradient(135deg, var(--primary-blue), #1e40af);
+        }
+
+        .internet-resource .resource-icon {
+            background: linear-gradient(135deg, #06b6d4, #0891b2);
+        }
+
+        .resource-name {
+            font-weight: 600;
+            color: #1f2937;
+        }
+
+        .resource-description {
+            color: var(--secondary-gray);
+            font-size: 0.875rem;
+            margin-bottom: 1rem;
+        }
+
+        .service-badges {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .service-badge {
+            background: #e2e8f0;
+            color: #475569;
+            padding: 0.25rem 0.5rem;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        /* Transport Layer Detail */
+        .transport-layer-detail {
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow-light);
+            border: 1px solid var(--border-color);
+        }
+
+        .transport-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 2rem;
+            color: #0f172a;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .transport-layers {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .layer-card {
+            background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            padding: 2rem;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .layer-card:hover {
+            border-color: var(--primary-blue);
+            box-shadow: var(--shadow-medium);
+        }
+
+        .layer-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .layer-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: white;
+        }
+
+        .layer-1 .layer-icon {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+        }
+
+        .layer-2 .layer-icon {
+            background: linear-gradient(135deg, var(--primary-purple), #6d28d9);
+        }
+
+        .layer-3 .layer-icon {
+            background: linear-gradient(135deg, var(--primary-blue), #1e40af);
+        }
+
+        .layer-name {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #0f172a;
+        }
+
+        .layer-description {
+            color: var(--secondary-gray);
+            font-size: 0.875rem;
+        }
+
+        .layer-content {
+            margin-bottom: 1.5rem;
+        }
+
+        .layer-features {
+            list-style: none;
+            padding: 0;
+        }
+
+        .layer-features li {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin: 0.5rem 0;
+            color: #374151;
+            font-size: 0.875rem;
+        }
+
+        .layer-features li::before {
+            content: '✓';
+            color: var(--primary-green);
+            font-weight: bold;
+        }
+
+        /* Message Flow Diagram */
+        .message-flow {
+            background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
+            border: 2px solid var(--primary-blue);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .flow-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 2rem;
+            color: #0c4a6e;
+        }
+
+        .message-sequence {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .message-step {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: var(--shadow-light);
+            opacity: 0;
+            transform: translateX(-50px);
+            animation: step-appear 0.8s ease-out forwards;
+        }
+
+        .message-step:nth-child(1) { animation-delay: 0.2s; }
+        .message-step:nth-child(2) { animation-delay: 0.4s; }
+        .message-step:nth-child(3) { animation-delay: 0.6s; }
+        .message-step:nth-child(4) { animation-delay: 0.8s; }
+        .message-step:nth-child(5) { animation-delay: 1.0s; }
+
+        .step-number {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--primary-blue), var(--primary-purple));
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .step-content {
+            flex: 1;
+        }
+
+        .step-title {
+            font-weight: 600;
+            color: #0f172a;
+            margin-bottom: 0.5rem;
+        }
+
+        .step-description {
+            color: var(--secondary-gray);
+            font-size: 0.875rem;
+            margin-bottom: 1rem;
+        }
+
+        .code-example {
+            background: #1e293b;
+            color: #e2e8f0;
+            border-radius: 8px;
+            padding: 1rem;
+            font-family: 'Fira Code', Monaco, 'Cascadia Code', monospace;
+            font-size: 0.8rem;
+            overflow-x: auto;
+            border-left: 4px solid var(--primary-blue);
+        }
+
+        .json-key {
+            color: #7dd3fc;
+        }
+
+        .json-string {
+            color: #86efac;
+        }
+
+        .json-number {
+            color: #fbbf24;
+        }
+
+        /* Protocol Demo */
+        .protocol-demo {
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow-light);
+            border: 1px solid var(--border-color);
+        }
+
+        .demo-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 2rem;
+            color: #0f172a;
+        }
+
+        .demo-container {
+            display: grid;
+            grid-template-columns: 1fr 2fr 1fr;
+            gap: 2rem;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .demo-endpoint {
+            background: linear-gradient(135deg, #f3f4f6, #e5e7eb);
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .demo-endpoint.active {
+            border-color: var(--primary-blue);
+            box-shadow: 0 0 20px rgba(37, 99, 235, 0.3);
+            transform: scale(1.02);
+        }
+
+        .demo-message {
+            background: linear-gradient(135deg, #fef3c7, #fed7aa);
+            border: 2px solid #f59e0b;
+            border-radius: 12px;
+            padding: 1.5rem;
+            position: relative;
+        }
+
+        .message-arrow {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 2rem;
+            color: var(--primary-orange);
+            animation: arrow-bounce 2s ease-in-out infinite;
+        }
+
+        .arrow-right {
+            right: -3rem;
+        }
+
+        .arrow-left {
+            left: -3rem;
+            transform: translateY(-50%) scaleX(-1);
+        }
+
+        /* Controls */
+        .controls-panel {
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: var(--shadow-light);
+            border: 1px solid var(--border-color);
+            text-align: center;
+        }
+
+        .controls-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            color: #0f172a;
+        }
+
+        .control-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .control-btn {
+            background: linear-gradient(135deg, var(--primary-blue), var(--primary-purple));
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: var(--shadow-light);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .control-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-medium);
+        }
+
+        .control-btn:active {
+            transform: translateY(0);
+        }
+
+        /* Animations */
+        @keyframes client-pulse {
+            0%, 100% {
+                box-shadow: 0 0 0 rgba(124, 58, 237, 0.4);
+            }
+            50% {
+                box-shadow: 0 0 20px rgba(124, 58, 237, 0.6);
+            }
+        }
+
+        @keyframes data-flow {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+
+        @keyframes server-activity {
+            0%, 100% {
+                opacity: 0.7;
+                transform: scaleX(1);
+            }
+            50% {
+                opacity: 1;
+                transform: scaleX(1.05);
+            }
+        }
+
+        @keyframes step-appear {
+            0% {
+                opacity: 0;
+                transform: translateX(-50px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes arrow-bounce {
+            0%, 20%, 50%, 80%, 100% {
+                transform: translateY(-50%) translateX(0);
+            }
+            40% {
+                transform: translateY(-50%) translateX(5px);
+            }
+            60% {
+                transform: translateY(-50%) translateX(-5px);
+            }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1200px) {
+            .architecture-grid,
+            .demo-container {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+            }
+            
+            .transport-layers {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+            
+            .header-content {
+                flex-direction: column;
+                gap: 1rem;
+                text-align: center;
+            }
+            
+            .connection-row {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            
+            .control-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header Section -->
+        <header class="header">
+            <div class="header-content">
+                <div class="header-title">
+                    <div class="header-icon">🏗️</div>
+                    <div>
+                        <h1>Model Context Protocol (MCP)</h1>
+                        <p>Standardized architecture for AI model integration and resource access</p>
+                    </div>
+                </div>
+                <div class="version-badge">v1.0 Specification</div>
+            </div>
+        </header>
+
+        <!-- Main Architecture Diagram -->
+        <div class="architecture-container">
+            <div class="architecture-grid">
+                <!-- Host Applications -->
+                <div class="host-section">
+                    <div class="section-title">
+                        🖥️ MCP Hosts
+                    </div>
+                    
+                    <div class="host-application claude-app" onclick="highlightHost(this)">
+                        <div class="app-header">
+                            <div class="app-icon">✱</div>
+                            <div>
+                                <div class="app-name">Claude Desktop</div>
+                                <div class="app-description">AI Assistant Application</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="host-application ide-app" onclick="highlightHost(this)">
+                        <div class="app-header">
+                            <div class="app-icon">&lt;/&gt;</div>
+                            <div>
+                                <div class="app-name">IDE Integration</div>
+                                <div class="app-description">Development Environment</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="host-application ai-tools-app" onclick="highlightHost(this)">
+                        <div class="app-header">
+                            <div class="app-icon">🤖</div>
+                            <div>
+                                <div class="app-name">AI Tools</div>
+                                <div class="app-description">Custom AI Applications</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- MCP Connections -->
+                <div class="middle-section">
+                    <div class="connection-row">
+                        <div class="mcp-client" onclick="highlightClient(this)">
+                            <div class="protocol-label">MCP</div>
+                            MCP Client
+                        </div>
+                        <div class="connection-line"></div>
+                        <div class="mcp-server" onclick="highlightServer(this)">
+                            <div class="server-title">MCP Server</div>
+                            <div class="server-stack">
+                                <div class="server-layer"></div>
+                                <div class="server-layer"></div>
+                                <div class="server-layer"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="connection-row">
+                        <div class="mcp-client" onclick="highlightClient(this)">
+                            <div class="protocol-label">MCP</div>
+                            MCP Client
+                        </div>
+                        <div class="connection-line"></div>
+                        <div class="mcp-server" onclick="highlightServer(this)">
+                            <div class="server-title">MCP Server</div>
+                            <div class="server-stack">
+                                <div class="server-layer"></div>
+                                <div class="server-layer"></div>
+                                <div class="server-layer"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="connection-row">
+                        <div class="mcp-client" onclick="highlightClient(this)">
+                            <div class="protocol-label">MCP</div>
+                            MCP Client
+                        </div>
+                        <div class="connection-line"></div>
+                        <div class="mcp-server" onclick="highlightServer(this)">
+                            <div class="server-title">MCP Server</div>
+                            <div class="server-stack">
+                                <div class="server-layer"></div>
+                                <div class="server-layer"></div>
+                                <div class="server-layer"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Resources -->
+                <div class="resources-section">
+                    <div class="section-title">
+                        🔌 Resources
+                    </div>
+
+                    <div class="resource-item filesystem-resource" onclick="highlightResource(this)">
+                        <div class="resource-header">
+                            <div class="resource-icon">📁</div>
+                            <div class="resource-name">Local Filesystem</div>
+                        </div>
+                        <div class="resource-description">File operations, directory access, and local storage</div>
+                        <div class="service-badges">
+                            <span class="service-badge">Read/Write</span>
+                            <span class="service-badge">Directory</span>
+                        </div>
+                    </div>
+
+                    <div class="resource-item database-resource" onclick="highlightResource(this)">
+                        <div class="resource-header">
+                            <div class="resource-icon">🗄️</div>
+                            <div class="resource-name">Database</div>
+                        </div>
+                        <div class="resource-description">SQL queries, data management, and storage operations</div>
+                        <div class="service-badges">
+                            <span class="service-badge">SQL</span>
+                            <span class="service-badge">CRUD</span>
+                        </div>
+                    </div>
+
+                    <div class="resource-item internet-resource" onclick="highlightResource(this)">
+                        <div class="resource-header">
+                            <div class="resource-icon">🌐</div>
+                            <div class="resource-name">Web APIs</div>
+                        </div>
+                        <div class="resource-description">Internet services, REST APIs, and external integrations</div>
+                        <div class="service-badges">
+                            <span class="service-badge">REST</span>
+                            <span class="service-badge">GraphQL</span>
+                            <span class="service-badge">OAuth</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        
